@@ -3,7 +3,7 @@
 
 Collection of 5 CTF challenges to expose users to Windows binary exploitation. 
 
-### Intended Route:
+### Recommended Route:
 1. Run the Numbers
 2. Calc Store
 3. Calc Adventure
