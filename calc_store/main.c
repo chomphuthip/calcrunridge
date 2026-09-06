@@ -19,7 +19,7 @@ size_t calculate_method(size_t a, size_t b) {
 void init_calc(struct calc* c, int buttons, char* name) {
     c->cost = buttons * 2;
     c->buttons = buttons;
-    strcpy(&c->name, name);
+    strcpy(c->name, name);
     c->calculate = calculate_method;
 }
 
@@ -111,7 +111,7 @@ void handle_calc(struct calc* calcs) {
     printf("Provide value B: ");
     scanf("%lld", &b);
 
-    printf("Result: %d\n\n", selected_calc->calculate(a, b));
+    printf("Result: %lld\n\n", selected_calc->calculate(a, b));
 }
 
 int main() {

@@ -161,7 +161,7 @@ void set_string(struct object* obj) {
 }
 
 void set_object_array(struct object* obj) {
-    char* user_input[USER_INPUT_SZ] = { 0 };
+    char user_input[USER_INPUT_SZ] = { 0 };
     printf("Index:\n");
 
     fgets(user_input, USER_INPUT_SZ, stdin);
@@ -197,7 +197,7 @@ void set_object_array(struct object* obj) {
 }
 
 void set_scalar_array(struct object* obj) {
-    char* user_input[USER_INPUT_SZ] = { 0 };
+    char user_input[USER_INPUT_SZ] = { 0 };
     printf("Index:\n");
 
     fgets(user_input, USER_INPUT_SZ, stdin);
@@ -208,7 +208,7 @@ void set_scalar_array(struct object* obj) {
 
     size_t new_scalar = user_input_scalar();
 
-    array_place_at(obj, new_scalar, index);
+    array_place_at(obj, (void*)new_scalar, index);
 }
 
 

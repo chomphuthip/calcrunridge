@@ -13,6 +13,6 @@ int main(int argc, char** argv) {
     printf("Uh let me run the numbers...\n");
     fgets(buf, sb.st_size, f);
     int a = atoi(buf);
-    int b = atoi(buf[5]);
+    int b = atoi(&buf[5]);
     printf("numbers came back! here they are: %x\n", a * b + 0xDEADBEEF + 0xC0DE);
 }
