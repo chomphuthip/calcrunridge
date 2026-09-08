@@ -9,3 +9,10 @@ Collection of 5 CTF challenges to expose users to Windows binary exploitation.
 3. Calc Adventure
 4. Confused Numbers
 5. Matrix Mania
+
+### Develop Skills:
+* __Code Analysis__: Practice static analysis skills by having access to source code
+* __Reverse Engineering__: Reverse engineer stripped binaries to identify memory corruption bugs
+* __Fuzzing__: Setup WinAFL fuzzing harnesses to discover vulnerabilities
+* __Exploit Development__: Practice different exploitation strategies (write-what-where to write ROP chain directly to stack vs. stack pivot)
+* __Going past the PoC__: Build end-to-end shellcode to connect to your favorite C2 and host instances for your friends using `ncat -e`
