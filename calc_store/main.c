@@ -115,6 +115,7 @@ void handle_calc(struct calc* calcs) {
 }
 
 int main() {
+    setvbuf(stdout, NULL, _IONBF, 0);
     char user_input[USER_INPUT_SZ] = { 0 };
 
     struct calc* calcs = gen_calcs();

@@ -60,7 +60,7 @@ public:
         hp--;
         if (hp > 0) {
             if (name.ascii_or_wide == ASCII_NAME) printf("%s: AUGH!\n", name.ascii_name);
-            else printf("%s: AUGH!\n", name.ascii_name);
+            else printf("%ls: AUGH!\n", name.wide_name);
         }
         else {
             if (name.ascii_or_wide == ASCII_NAME) printf("%s has died\n", name.ascii_name);
@@ -81,10 +81,14 @@ public:
 
     void pretty_print() {
         if (name.ascii_or_wide == ASCII_NAME) {
-            printf("Name: %s\n", name.ascii_name);
+            printf("Name: ");
+            printf(name.ascii_name);
+            printf("\n");
         }
         else {
-            printf("Name: %ls\n", name.wide_name);
+            printf("Name: ");
+            wprintf(name.wide_name);
+            printf("\n");
         }
         printf("HP: %d\n", hp);
     }
@@ -143,7 +147,7 @@ void handle_edit(std::vector<Character*> characters) {
     char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Select a hero to edit:\n");
-    handle_list(characters);
+    //handle_list(characters);
     printf("\n>>");
 
     fgets(user_input, USER_INPUT_SZ, stdin);
@@ -185,7 +189,7 @@ void handle_damage(std::vector<Character*> characters) {
     char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Select a hero to deal damage to:\n");
-    handle_list(characters);
+    //handle_list(characters);
     printf("\n>>");
 
     fgets(user_input, USER_INPUT_SZ, stdin);
@@ -203,7 +207,7 @@ void handle_widen(std::vector<Character*> characters) {
     char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Select a hero change name to wide:\n");
-    handle_list(characters);
+    //handle_list(characters);
     printf("\n>>");
 
     fgets(user_input, USER_INPUT_SZ, stdin);
@@ -220,8 +224,8 @@ void handle_widen(std::vector<Character*> characters) {
 void handle_special_move(std::vector<Character*> characters) {
     char user_input[USER_INPUT_SZ] = { 0 };
 
-    printf("Select a hero change name to wide:\n");
-    handle_list(characters);
+    printf("Select a hero to use a special move:\n");
+    //handle_list(characters);
     printf("\n>>");
 
     fgets(user_input, USER_INPUT_SZ, stdin);
@@ -235,7 +239,31 @@ void handle_special_move(std::vector<Character*> characters) {
     characters[idx]->special_move();
 }
 
+#define CHEATCODE_NUMS 6
+void handle_enter_cheat_code() {
+    char user_input[USER_INPUT_SZ] = { 0 };
+    size_t* block = (size_t*)calloc(6, sizeof(size_t));
+
+    printf("Input numbers seperated by commas:");
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\n")] = '\0';
+
+    int idx = 0;
+    int chars_travelled = 0;
+    size_t cur_num = 0;
+    char* cur_ptr = user_input;
+    while (idx < 6 && sscanf(cur_ptr, "%llx%n", &cur_num, &chars_travelled) == 1) {
+        block[idx++] = cur_num;
+
+        cur_ptr += chars_travelled;
+        while (*cur_ptr == ' ' || *cur_ptr == ',') cur_ptr++;
+    }
+    printf("secret: %x\n", (int)block & 0xF);
+}
+
 int main() {
+    setvbuf(stdout, NULL, _IONBF, 0);
+
     char user_input[USER_INPUT_SZ] = { 0 };
 
     std::vector<Character*> characters;
@@ -263,6 +291,9 @@ int main() {
             break;
         case '5':
             handle_widen(characters);
+            break;
+        case '!':
+            handle_enter_cheat_code();
             break;
         case '6':
             printf("See ya later!\n");

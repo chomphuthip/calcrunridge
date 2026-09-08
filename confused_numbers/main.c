@@ -2,41 +2,26 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-enum object_type {
-    STRING,
-    OBJECT_ARRAY,
-    SCALAR_ARRAY
-};
-
-struct object {
-    enum object_type type;
-    size_t len; //length by data type, not bytes
-    void* backing_store;
-};
-
 enum entry_type {
-    SCALAR,
-    POINTER
+    SDHF,
+    SMART,
+    SCALAR
 };
 
+#define COLLECTION_LEN 3
 struct namespace_entry {
     char* name;
     enum entry_type type;
-    struct object* backing_obj; //if SCALAR, is used to hold 64 bit number
+    union {
+        size_t* sdhf;
+        char** smart_colors;
+        size_t rgb;
+    };
 };
 
 #define MAX_NAMESPACE 0x100
 
 struct namespace_entry namespace[MAX_NAMESPACE];
-
-#define ARRAY_PLACE_OOB -1
-#define ARRAY_SUCCESS 0
-int array_place_at(struct object* array, void* new_thing, size_t idx) {
-    if (idx < 0 || idx >= array->len) return ARRAY_PLACE_OOB;
-    void** backing = array->backing_store;
-    backing[idx] = new_thing;
-    return ARRAY_SUCCESS;
-}
 
 struct namespace_entry* next_free_entry() {
     for (size_t i = 0; i < MAX_NAMESPACE; i++) {
@@ -54,268 +39,265 @@ struct namespace_entry* entry_from_name(char* name) {
     return NULL;
 }
 
-void print_string(struct object* obj) {
-    printf(obj->backing_store);
-    printf("\n");
+#define USER_INPUT_SZ 0x100
+
+void set_sdhf(struct namespace_entry* e) {
+    char user_input[USER_INPUT_SZ] = { 0 };
+
+    printf("Input your values for your SUPER DUPER HIGH FIDELITY color (comma seperated, hexdecimal):");
+
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    
+    size_t* sdhf = calloc(COLLECTION_LEN, sizeof(size_t));
+
+    int idx = 0;
+    int chars_travelled = 0;
+    size_t cur_num = 0;
+    char* cur_ptr = user_input;
+    while (idx < COLLECTION_LEN && sscanf(cur_ptr, "%llx%n", &cur_num, &chars_travelled) == 1) {
+        sdhf[idx++] = cur_num;
+
+        cur_ptr += chars_travelled;
+        while (*cur_ptr == ' ' || *cur_ptr == ',') cur_ptr++;
+    }
+
+    e->sdhf = sdhf;
 }
 
-void print_scalar_array(struct object* obj);
+void set_smart(struct namespace_entry* e) {
+    char user_input[USER_INPUT_SZ] = { 0 };
 
-void print_object_array(struct object* obj) {
-    struct object** arr = obj->backing_store;
-    printf("[\n");
-    for (size_t i = 0; i < obj->len; i++) {    
-        printf("\t");
-        if (!arr[i]) { printf("<empty>\n"); continue; }
-        switch (arr[i]->type) {
-        case STRING:
-            print_string(arr[i]);
-            break;
-        case OBJECT_ARRAY:
-            print_object_array(arr[i]);
-            break;
-        case SCALAR_ARRAY:
-            print_scalar_array(arr[i]);
-        }
+    printf("Input your values for your Smart(tm) color (space seperated strings):");
+
+    fgets(user_input, USER_INPUT_SZ, stdin);
+
+    char** smart_colors = calloc(COLLECTION_LEN, sizeof(char*));
+
+    int idx = 0;
+    int chars_travelled = 0;
+    char* cur_ptr = user_input;
+    char cur_word[64] = { 0 };
+    while (idx < COLLECTION_LEN && sscanf(cur_ptr, "%s%n", &cur_word, &chars_travelled) == 1) {
+        smart_colors[idx++] = _strdup(cur_word);
+        memset(cur_word, 0, 64);
+
+        cur_ptr += chars_travelled;
+        while (*cur_ptr == ' ' || *cur_ptr == ',') cur_ptr++;
     }
+
+    e->smart_colors = smart_colors;
+}
+
+void set_rgb(struct namespace_entry* e) {
+    char user_input[USER_INPUT_SZ] = { 0 };
+
+    printf("Input hex value for RGB:");
+
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\n")] = 0;
+    sscanf(user_input, "%llx", &e->rgb);
+    
+}
+
+void print_sdhf(struct namespace_entry* e) {
+    printf("%s: %llx, %llx, %llx\n", e->name, e->sdhf[0], e->sdhf[1], e->sdhf[2]);
+}
+
+void print_smart(struct namespace_entry* e) {
+    printf("%s: [\n", e->name);
+    printf("\t"); printf(e->smart_colors[0]); printf("\n");
+    printf("\t"); printf(e->smart_colors[1]); printf("\n");
+    printf("\t"); printf(e->smart_colors[2]); printf("\n");
     printf("]\n");
 }
 
-void print_scalar_array(struct object* obj) {
-    void** arr = obj->backing_store;
-    for (size_t i = 0; i < obj->len; i++) {
-        printf("%p, ", arr[i]);
-    }
-    printf("\n");
+void print_rgb(struct namespace_entry* e) {
+    printf("%s: %llx\n", e->name, e->rgb);
 }
 
-void print_obj(struct object* obj) {
-    switch (obj->type) {
-    case STRING:
-        print_string(obj);
-        break;
-    case OBJECT_ARRAY:
-        print_object_array(obj);
-        break;
-    case SCALAR_ARRAY:
-        print_scalar_array(obj);
-        break;
-    }
-}
-
-void print_entry(struct namespace_entry* entry) {
-    if (entry->type == SCALAR) printf("%p\n", entry->backing_obj);
-    else print_obj(entry->backing_obj);
-}
-
-void print_namespace() {
+void list_colors() {
     for (size_t i = 0; i < MAX_NAMESPACE; i++) {
         if (!namespace[i].name) continue;
-
-        printf("%s: ", namespace[i].name);
-        print_entry(&namespace[i]);
+        switch (namespace[i].type) {
+        case SDHF:
+            print_sdhf(&namespace[i]);
+            break;
+        case SMART:
+            print_smart(&namespace[i]);
+            break;
+        case SCALAR:
+            print_rgb(&namespace[i]);
+            break;
+        }
     }
 }
 
-#define USER_INPUT_SZ 0x100
+void handle_convert_color() {
+    printf("Which color would you like to convert?\n");
+    list_colors();
 
-size_t user_input_scalar() {
-    printf("Scalar Value or Variable:\n");
-
-    char* end_ptr = 0;
-    size_t new_scalar = 0;
-    int set = 0;
-    char user_input[USER_INPUT_SZ] = { 0 };
-    while (!set) {
-        fgets(user_input, USER_INPUT_SZ, stdin);
-        char* newline = memchr(user_input, '\n', sizeof(user_input));
-        if (newline) *newline = '\0';
-
-        struct namespace_entry* entry = entry_from_name(user_input);
-        if (entry) { new_scalar = (size_t)entry->backing_obj; break; }
-
-        //try reading as a base 10 number
-        new_scalar = strtoll(user_input, &end_ptr, 10);
-        if (*end_ptr == '\0') break;
-
-        //try reading as a base 16
-        new_scalar = strtoll(user_input, &end_ptr, 16);
-        if (*end_ptr == '\0') break;
-
-        printf("invalid input\n");
-    }
-    return new_scalar;
-}
-
-void set_string(struct object* obj) {
     char user_input[USER_INPUT_SZ] = { 0 };
 
-    printf("New value:\n");
-
+    memset(user_input, 0, USER_INPUT_SZ);
     fgets(user_input, USER_INPUT_SZ, stdin);
-    char* newline = memchr(user_input, '\n', sizeof(user_input));
-    if (newline) *newline = '\0';
+    user_input[strcspn(user_input, "\n")] = 0;
+    
 
-    obj->backing_store = _strdup(user_input);
-    obj->len = strlen(user_input);
-}
+    struct namespace_entry* e = entry_from_name(user_input);
+    if (!e) { printf("color not reconized\n"); return; }
 
-void set_object_array(struct object* obj) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-    printf("Index:\n");
+    printf("Which color type would you like to convert %s to?\n", e->name);
+    printf("1: SUPER DUPER HIGH FIDELITY\n2: Smart(tm) color\n3: RGB\n");
 
+    memset(user_input, 0, USER_INPUT_SZ);
     fgets(user_input, USER_INPUT_SZ, stdin);
-    char* newline = memchr(user_input, '\n', sizeof(user_input));
-    if (newline) *newline = '\0';
-
-    int index = atoi(user_input);
-
-    printf("Object name:\n");
-
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    newline = memchr(user_input, '\n', sizeof(user_input));
-    if (newline) *newline = '\0';
-
-    struct namespace_entry* cur_entry = entry_from_name(user_input);
-    if (!cur_entry) {
-        printf("Object not in namespace!\n");
+    switch(user_input[0]) {
+    case '1':
+        e->type = SDHF;
+        break;
+    case '2':
+        e->type = SMART;
+        break;
+    case '3':
+        e->type = SCALAR;
+        break;
+    default:
+        printf("choice not recognized\n");
         return;
     }
 
-    void* temp = NULL;
-    if (index < 0 || index >= obj->len) {
-        temp = realloc(obj->backing_store, index * sizeof(void*));
-        if (!temp) {
-            printf("OOM!\n");
-            return;
-        }
-
-        obj->backing_store = temp;
-    }
-
-    array_place_at(obj, cur_entry->backing_obj, index);
-}
-
-void set_scalar_array(struct object* obj) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-    printf("Index:\n");
-
+    printf("WARNING: CONVERTING COLOR WILL LIKELY RESULT IN DATA LOSS. TYPE 'AFFIRM' TO CONTINUE\n");
+    memset(user_input, 0, USER_INPUT_SZ);
     fgets(user_input, USER_INPUT_SZ, stdin);
-    char* newline = memchr(user_input, '\n', sizeof(user_input));
-    if (newline) *newline = '\0';
-
-    int index = atoi(user_input);
-
-    size_t new_scalar = user_input_scalar();
-
-    array_place_at(obj, (void*)new_scalar, index);
-}
-
-
-
-void set_scalar(struct namespace_entry* entry) {
-    printf("Set %s value\n", entry->name);
-
-    entry->backing_obj = (void*)user_input_scalar();
-}
-
-#define ARR_INIT_SZ 3
-void set_variable() {
-    char user_input[USER_INPUT_SZ] = { 0 };
-
-    printf("Set variable name:\n");
-
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    char* newline = memchr(user_input, '\n', sizeof(user_input));
-    if (newline) *newline = '\0';
-
-    struct namespace_entry* cur_entry = entry_from_name(user_input);
-    struct object* cur_obj = NULL;
-
-    if (!cur_entry) {
-        char* new_var_name = strdup(user_input);
-        printf("Select new var type:\n1 - scalar\n2 - string\n3 - object array\n4 - scalar array\n");
-
-        fgets(user_input, USER_INPUT_SZ, stdin);
-        newline = memchr(user_input, '\n', sizeof(user_input));
-        if (newline) *newline = '\0';
-        
-        cur_entry = next_free_entry();
-        if (!cur_entry) { printf("namespace full!\n"); return; }
-        //if scalar, strdup name into entry slot, set type, and set value
-        if (user_input[0] == '1') {
-
-
-            cur_entry->name = new_var_name;
-            cur_entry->type = SCALAR;
-
-            set_scalar(cur_entry);
-            return;
-        }
-
-
-        cur_obj = calloc(1, sizeof(*cur_obj));
-        switch(user_input[0]) {
-        case '2':
-            cur_obj->type = STRING;
-            cur_obj->len = 0;
-            break;
-        case '3':
-            cur_obj->type = OBJECT_ARRAY;
-            cur_obj->len = ARR_INIT_SZ;
-            cur_obj->backing_store = calloc(ARR_INIT_SZ, sizeof(void*));
-            break;
-        case '4':
-            cur_obj->type = SCALAR_ARRAY;
-            cur_obj->len = ARR_INIT_SZ;
-            cur_obj->backing_store = calloc(ARR_INIT_SZ, sizeof(size_t));
-            break;
-        default:
-            printf("invalid choice!\n");
-            free(new_var_name);
-            free(cur_obj);
-            return;
-        }
-
-        cur_entry->type = POINTER;
-        cur_entry->backing_obj = cur_obj;
-        cur_entry->name = new_var_name;
-    }
-
-    if (cur_entry->type == SCALAR) {
-        set_scalar(cur_entry);
+    if (strcmp(user_input, "AFFIRM") != 0) {
+        printf("ABORTED!\n");
         return;
     }
 
-    cur_obj = cur_entry->backing_obj;
-    switch (cur_obj->type) {
-    case STRING:
-        set_string(cur_obj);
-        break;
-    case OBJECT_ARRAY:
-        set_object_array(cur_obj);
-        break;
-    case SCALAR_ARRAY:
-        set_scalar_array(cur_obj);
-        break;
+    switch (e->type) {
+    case SDHF:
+        set_sdhf(e);
+        return;
+    case SMART:
+        set_smart(e);
+        return;
+    case SCALAR:
+        set_rgb(e);
+        return;
     }
 }
+
+void handle_new_color() {
+    printf("Input name of new color:\n");
+    char user_input[USER_INPUT_SZ] = { 0 };
+
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\n")] = 0;
+
+    struct namespace_entry* e = entry_from_name(user_input);
+    if (e) { printf("color already exists!\n"); return; }
+
+    char* new_name = strdup(user_input);
+
+    e = next_free_entry();
+
+    printf("Select new color type:\n");
+    printf("1: SUPER DUPER HIGH FIDELITY\n2: Smart(tm) color\n3: RGB\n");
+
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    switch (user_input[0]) {
+    case '1':
+        e->type = SDHF;
+        set_sdhf(e);
+        break;
+    case '2':
+        e->type = SMART;
+        set_smart(e);
+        break;
+    case '3':
+        e->type = SCALAR;
+        set_rgb(e);
+        break;
+    default:
+        printf("choice not recognized\n");
+        free(new_name);
+        return;
+    }
+
+    e->name = new_name;
+}
+
+void handle_edit_color() {
+    printf("Input name of color to edit:\n");
+    char user_input[USER_INPUT_SZ] = { 0 };
+
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\n")] = 0;
+
+    struct namespace_entry* e = entry_from_name(user_input);
+    if (!e) { printf("color not reconized!\n"); return; }
+
+    switch (e->type) {
+    case SDHF:
+        set_sdhf(e);
+        break;
+    case SMART:
+        set_smart(e);
+        break;
+    case SCALAR:
+        set_rgb(e);
+        break;
+    default:
+        printf("choice not recognized\n");
+        return;
+    }
+}
+
+void handle_render() {
+    printf("Input name of color to edit:\n");
+    char user_input[USER_INPUT_SZ] = { 0 };
+
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\n")] = 0;
+
+    struct namespace_entry* e = entry_from_name(user_input);
+    if (!e) { printf("color not reconized!\n"); return; }
+
+    printf("Rendering %s...\n", e->name);
+
+    printf("Wow! Its so beautiful!\n");
+}
+
 
 int main() {
+    setvbuf(stdout, NULL, _IONBF, 0);
     char user_input[USER_INPUT_SZ] = { 0 };
 
     while (1) {
-        printf("Select an option:\n1: set a variable\n2: list all variables\n>>");
+        printf("Select an option:\n1: add a new color\n2: edit a color\n3: list all colors\n4: convert a color to a different format\n5: render a color\n>>");
 
         memset(user_input, 0, USER_INPUT_SZ);
         fgets(user_input, USER_INPUT_SZ, stdin);
 
         switch (user_input[0]) {
         case '1':
-            set_variable();
+            handle_new_color();
             break;
         case '2':
-            print_namespace();
+            handle_edit_color();
+            break;
+        case '3':
+            list_colors();
+            break;
+        case '4':
+            handle_convert_color();
+            break;
+        case '5':
+            handle_render();
             break;
         default:
             printf("Unknown choice\n\n");

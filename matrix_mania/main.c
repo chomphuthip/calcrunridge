@@ -149,6 +149,7 @@ void handle_set_display_mode() {
 }
 
 int main() {
+	setvbuf(stdout, NULL, _IONBF, 0);
 	char user_input[USER_INPUT_SZ] = { 0 };
 
 	while (1) {
