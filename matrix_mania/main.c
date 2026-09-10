@@ -64,8 +64,7 @@ void set_matrix(struct matrix* m) {
 
 
 	printf("Specify height and length as h,l (no spaces):");
-	fgets(user_input, USER_INPUT_SZ, stdin);
-	user_input[strcspn(user_input, "\n")] = '\0';
+	get_user_input();
 
 	int new_l, new_h;
 	sscanf(user_input,"%d,%d", &new_h, &new_l);
@@ -77,8 +76,7 @@ void set_matrix(struct matrix* m) {
 	m->l = new_l;
 
 	printf("Input numbers seperated by commas:");
-	fgets(user_input, USER_INPUT_SZ, stdin);
-	user_input[strcspn(user_input, "\n")] = '\0';
+	get_user_input();
 
 	int nums_to_process = new_l * new_h;
 	int idx = 0;
@@ -158,8 +156,7 @@ int main() {
 	while (1) {
 		printf("Select an option:\n1: Create matrix\n2: Edit matrix\n3: Display matrix\n4: Set Display Mode\n>>");
 
-		memset(user_input, 0, USER_INPUT_SZ);
-		fgets(user_input, USER_INPUT_SZ, stdin);
+		get_user_input();
 
 		switch (user_input[0]) {
 		case '1':
