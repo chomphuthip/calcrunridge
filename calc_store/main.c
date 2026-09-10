@@ -2,8 +2,15 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define CALC_COUNT 3
 #define USER_INPUT_SZ 0x100
+char user_input[USER_INPUT_SZ];
+void get_user_input() {
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\r\n")] = '\0';
+}
+
+#define CALC_COUNT 3
 
 struct calc {
     int cost;
@@ -56,13 +63,12 @@ void handle_list(struct calc* calcs) {
 }
 
 void handle_edit(struct calc* calcs) {
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Select calc:\n");
     handle_list(calcs);
     printf("\n>>");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     size_t idx = atoi(user_input);
 
     if (idx < 0 || idx >= CALC_COUNT) {
@@ -73,9 +79,7 @@ void handle_edit(struct calc* calcs) {
     struct calc* selected_calc = &calcs[idx];
 
     printf("New name: ");
-    fgets(selected_calc->name, USER_INPUT_SZ, stdin);
-    char* newline = memchr(selected_calc->name, '\n', sizeof(selected_calc->name));
-    if (newline) *newline = '\0';
+    get_user_input();
 
     printf("New cost: ");
     scanf("%d", &selected_calc->cost);
@@ -87,13 +91,12 @@ void handle_edit(struct calc* calcs) {
 }
 
 void handle_calc(struct calc* calcs) {
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Select calc:\n");
     handle_list(calcs);
     printf("\n>>");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     size_t idx = atoi(user_input);
 
     if (idx < 0 || idx >= CALC_COUNT) {
@@ -116,7 +119,6 @@ void handle_calc(struct calc* calcs) {
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     struct calc* calcs = gen_calcs();
     
@@ -128,8 +130,7 @@ int main() {
     while (1) {
         printf("Select an option:\n1: edit a calc\n2: list all calcs\n3: run calculation\n4: quit\n>>");
         
-        memset(user_input, 0, USER_INPUT_SZ);
-        fgets(user_input, USER_INPUT_SZ, stdin);
+        get_user_input();
 
         switch (user_input[0]) {
         case '1':

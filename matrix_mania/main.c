@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include<string.h>
 
+#define USER_INPUT_SZ 0x100
+char user_input[USER_INPUT_SZ];
+void get_user_input() {
+	memset(user_input, 0, USER_INPUT_SZ);
+	fgets(user_input, USER_INPUT_SZ, stdin);
+	user_input[strcspn(user_input, "\r\n")] = '\0';
+}
+
 #define MAX_H 0x10
 #define MAX_L 0x10
 
@@ -52,10 +60,8 @@ void print_matrix(struct matrix* m) {
 	}
 }
 
-#define USER_INPUT_SZ 0x100
-
 void set_matrix(struct matrix* m) {
-	char user_input[USER_INPUT_SZ] = { 0 };
+
 
 	printf("Specify height and length as h,l (no spaces):");
 	fgets(user_input, USER_INPUT_SZ, stdin);
@@ -104,7 +110,6 @@ void handle_create_matrix() {
 }
 
 void handle_edit_matrix() {
-	char user_input[USER_INPUT_SZ] = { 0 };
 
 	printf("Index of matrix to edit:");
 	
@@ -124,7 +129,6 @@ void handle_edit_matrix() {
 }
 
 void handle_display_matrix() {
-	char user_input[USER_INPUT_SZ] = { 0 };
 
 	printf("Index of matrix to display:");
 
@@ -150,7 +154,6 @@ void handle_set_display_mode() {
 
 int main() {
 	setvbuf(stdout, NULL, _IONBF, 0);
-	char user_input[USER_INPUT_SZ] = { 0 };
 
 	while (1) {
 		printf("Select an option:\n1: Create matrix\n2: Edit matrix\n3: Display matrix\n4: Set Display Mode\n>>");

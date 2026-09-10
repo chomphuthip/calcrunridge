@@ -2,6 +2,14 @@
 #include<string.h>
 #include<vector>
 
+#define USER_INPUT_SZ 0x100
+char user_input[USER_INPUT_SZ];
+void get_user_input() {
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\r\n")] = '\0';
+}
+
 #define ASCII_NAME 0
 #define WIDE_NAME 1
 struct accessible_name {
@@ -9,6 +17,7 @@ struct accessible_name {
     union {
         char* ascii_name;
         wchar_t* wide_name;
+        void* name_buf;
     };
 };
 
@@ -18,7 +27,7 @@ private:
 
 public:
     struct accessible_name name;
-    std::vector<Character*>* map;
+    std::vector<Character*>* character_list;
     int hp;
 
     Character(char* new_name, std::vector<Character*>& characters) {
@@ -28,8 +37,8 @@ public:
         internal_name = strdup(new_name);
         hp = 5;
 
-        map = &characters;
-        map->push_back(this);
+        character_list = &characters;
+        character_list->push_back(this);
     }
 
     virtual void special_move() {
@@ -94,17 +103,13 @@ public:
     }
 
     virtual ~Character() {
-        for (size_t i = 0; i < map->size(); i++) {
-            if (strcmp((*map)[i]->name.ascii_name, internal_name) == 0) (*map)[i] = NULL;
+        for (size_t i = 0; i < character_list->size(); i++) {
+            if (strcmp((*character_list)[i]->name.ascii_name, internal_name) == 0) 
+                (*character_list)[i] = NULL;
         }
 
-        if (name.ascii_or_wide == ASCII_NAME) {
-            if (name.ascii_name) free(name.ascii_name);
-        }
-        else {
-            if (name.wide_name) free(name.wide_name);
-        }
-        
+        if (name.name_buf) free(name.name_buf);
+
         free(internal_name);
     }
 };
@@ -117,8 +122,6 @@ public:
         printf("beep boop!\n");
     }
 };
-
-#define USER_INPUT_SZ 0x100
 
 #define CALC_COUNT 0x3
 
@@ -144,13 +147,10 @@ void handle_list(std::vector<Character*> characters) {
 }
 
 void handle_edit(std::vector<Character*> characters) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-
     printf("Select a hero to edit:\n");
-    //handle_list(characters);
     printf("\n>>");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     size_t idx = atoi(user_input);
 
     if (idx < 0 || idx >= CALC_COUNT) {
@@ -163,10 +163,7 @@ void handle_edit(std::vector<Character*> characters) {
     printf("New name: ");
     memset(user_input, 0, USER_INPUT_SZ);
     if (cur_char->name.ascii_or_wide == ASCII_NAME) {
-        fgets(user_input, USER_INPUT_SZ, stdin);
-
-        char* newline = (char*)memchr(user_input, '\n', USER_INPUT_SZ);
-        if (newline) *newline = '\0';
+        get_user_input();
 
         cur_char->set_ascii_name(user_input);
     }
@@ -186,13 +183,10 @@ void handle_edit(std::vector<Character*> characters) {
 }
 
 void handle_damage(std::vector<Character*> characters) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-
     printf("Select a hero to deal damage to:\n");
-    //handle_list(characters);
     printf("\n>>");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     size_t idx = atoi(user_input);
 
     if (idx < 0 || idx >= CALC_COUNT) {
@@ -203,14 +197,11 @@ void handle_damage(std::vector<Character*> characters) {
     characters[idx]->take_damage();
 }
 
-void handle_widen(std::vector<Character*> characters) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-
-    printf("Select a hero change name to wide:\n");
-    //handle_list(characters);
+void handle_banner(std::vector<Character*> characters) {
+    printf("Select a hero change render a banner for:\n");
     printf("\n>>");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     size_t idx = atoi(user_input);
 
     if (idx < 0 || idx >= CALC_COUNT) {
@@ -219,16 +210,16 @@ void handle_widen(std::vector<Character*> characters) {
     }
 
     characters[idx]->set_to_wide();
+
+    wprintf(L"\xE2\xE1\xE1\xE2 %ls \xE2\xE1\xE1\xE2\n", characters[idx]->name.wide_name);
 }
 
 void handle_special_move(std::vector<Character*> characters) {
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Select a hero to use a special move:\n");
-    //handle_list(characters);
     printf("\n>>");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     size_t idx = atoi(user_input);
 
     if (idx < 0 || idx >= CALC_COUNT) {
@@ -241,12 +232,10 @@ void handle_special_move(std::vector<Character*> characters) {
 
 #define CHEATCODE_NUMS 6
 void handle_enter_cheat_code() {
-    char user_input[USER_INPUT_SZ] = { 0 };
     size_t* block = (size_t*)calloc(6, sizeof(size_t));
 
     printf("Input numbers seperated by commas:");
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    user_input[strcspn(user_input, "\n")] = '\0';
+    get_user_input();
 
     int idx = 0;
     int chars_travelled = 0;
@@ -258,23 +247,20 @@ void handle_enter_cheat_code() {
         cur_ptr += chars_travelled;
         while (*cur_ptr == ' ' || *cur_ptr == ',') cur_ptr++;
     }
-    printf("secret: %x\n", (int)block & 0xF);
+    printf("secret: %llx\n", *block & 0xF);
 }
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
-
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     std::vector<Character*> characters;
     init_characters(characters);
 
     while (1) {
         printf("Select an option:\n1: edit a character\n2: list all characters\n3: use special move!\n4: deal damage to a character\n"
-        "5: widen character name\n6: quit\n>>");
+        "5: render custom banner for character\n6: quit\n>>");
 
-        memset(user_input, 0, USER_INPUT_SZ);
-        fgets(user_input, USER_INPUT_SZ, stdin);
+        get_user_input();
 
         switch (user_input[0]) {
         case '1':
@@ -290,7 +276,7 @@ int main() {
             handle_damage(characters);
             break;
         case '5':
-            handle_widen(characters);
+            handle_banner(characters);
             break;
         case '!':
             handle_enter_cheat_code();

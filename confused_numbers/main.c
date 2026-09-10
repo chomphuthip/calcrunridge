@@ -2,6 +2,14 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+#define USER_INPUT_SZ 0x100
+char user_input[USER_INPUT_SZ];
+void get_user_input() {
+    memset(user_input, 0, USER_INPUT_SZ);
+    fgets(user_input, USER_INPUT_SZ, stdin);
+    user_input[strcspn(user_input, "\r\n")] = '\0';
+}
+
 enum entry_type {
     SDHF,
     SMART,
@@ -39,14 +47,10 @@ struct namespace_entry* entry_from_name(char* name) {
     return NULL;
 }
 
-#define USER_INPUT_SZ 0x100
-
 void set_sdhf(struct namespace_entry* e) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-
     printf("Input your values for your SUPER DUPER HIGH FIDELITY color (comma seperated, hexdecimal):");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     
     size_t* sdhf = calloc(COLLECTION_LEN, sizeof(size_t));
 
@@ -65,11 +69,9 @@ void set_sdhf(struct namespace_entry* e) {
 }
 
 void set_smart(struct namespace_entry* e) {
-    char user_input[USER_INPUT_SZ] = { 0 };
-
     printf("Input your values for your Smart(tm) color (space seperated strings):");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
 
     char** smart_colors = calloc(COLLECTION_LEN, sizeof(char*));
 
@@ -89,12 +91,10 @@ void set_smart(struct namespace_entry* e) {
 }
 
 void set_rgb(struct namespace_entry* e) {
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     printf("Input hex value for RGB:");
 
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    user_input[strcspn(user_input, "\n")] = 0;
+    get_user_input();
     sscanf(user_input, "%llx", &e->rgb);
     
 }
@@ -136,12 +136,7 @@ void handle_convert_color() {
     printf("Which color would you like to convert?\n");
     list_colors();
 
-    char user_input[USER_INPUT_SZ] = { 0 };
-
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    user_input[strcspn(user_input, "\n")] = 0;
-    
+    get_user_input();
 
     struct namespace_entry* e = entry_from_name(user_input);
     if (!e) { printf("color not reconized\n"); return; }
@@ -149,8 +144,7 @@ void handle_convert_color() {
     printf("Which color type would you like to convert %s to?\n", e->name);
     printf("1: SUPER DUPER HIGH FIDELITY\n2: Smart(tm) color\n3: RGB\n");
 
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     switch(user_input[0]) {
     case '1':
         e->type = SDHF;
@@ -167,8 +161,7 @@ void handle_convert_color() {
     }
 
     printf("WARNING: CONVERTING COLOR WILL LIKELY RESULT IN DATA LOSS. TYPE 'AFFIRM' TO CONTINUE\n");
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();;
     if (strcmp(user_input, "AFFIRM") != 0) {
         printf("ABORTED!\n");
         return;
@@ -189,11 +182,8 @@ void handle_convert_color() {
 
 void handle_new_color() {
     printf("Input name of new color:\n");
-    char user_input[USER_INPUT_SZ] = { 0 };
 
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    user_input[strcspn(user_input, "\n")] = 0;
+    get_user_input();
 
     struct namespace_entry* e = entry_from_name(user_input);
     if (e) { printf("color already exists!\n"); return; }
@@ -205,8 +195,7 @@ void handle_new_color() {
     printf("Select new color type:\n");
     printf("1: SUPER DUPER HIGH FIDELITY\n2: Smart(tm) color\n3: RGB\n");
 
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
+    get_user_input();
     switch (user_input[0]) {
     case '1':
         e->type = SDHF;
@@ -231,11 +220,8 @@ void handle_new_color() {
 
 void handle_edit_color() {
     printf("Input name of color to edit:\n");
-    char user_input[USER_INPUT_SZ] = { 0 };
 
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    user_input[strcspn(user_input, "\n")] = 0;
+    get_user_input();
 
     struct namespace_entry* e = entry_from_name(user_input);
     if (!e) { printf("color not reconized!\n"); return; }
@@ -258,11 +244,8 @@ void handle_edit_color() {
 
 void handle_render() {
     printf("Input name of color to edit:\n");
-    char user_input[USER_INPUT_SZ] = { 0 };
 
-    memset(user_input, 0, USER_INPUT_SZ);
-    fgets(user_input, USER_INPUT_SZ, stdin);
-    user_input[strcspn(user_input, "\n")] = 0;
+    get_user_input();
 
     struct namespace_entry* e = entry_from_name(user_input);
     if (!e) { printf("color not reconized!\n"); return; }
@@ -275,14 +258,11 @@ void handle_render() {
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
-    char user_input[USER_INPUT_SZ] = { 0 };
 
     while (1) {
         printf("Select an option:\n1: add a new color\n2: edit a color\n3: list all colors\n4: convert a color to a different format\n5: render a color\n>>");
 
-        memset(user_input, 0, USER_INPUT_SZ);
-        fgets(user_input, USER_INPUT_SZ, stdin);
-
+        get_user_input();
         switch (user_input[0]) {
         case '1':
             handle_new_color();
