@@ -10,8 +10,8 @@ void get_user_input() {
 	user_input[strcspn(user_input, "\r\n")] = '\0';
 }
 
-#define MAX_H 0x10
-#define MAX_L 0x10
+#define MAX_H 0x3
+#define MAX_L 0x3
 
 struct matrix {
 	int h;
@@ -154,7 +154,7 @@ int main() {
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	while (1) {
-		printf("Select an option:\n1: Create matrix\n2: Edit matrix\n3: Display matrix\n4: Set Display Mode\n>>");
+		printf("Select an option:\n1: Create matrix\n2: Edit matrix\n3: Display matrix\n4: Set Display Mode\n5: Exit\n>>");
 
 		get_user_input();
 
@@ -171,6 +171,8 @@ int main() {
 		case '4':
 			handle_set_display_mode();
 			break;
+		case '5':
+			return 0;
 		default:
 			printf("Unknown choice\n\n");
 			break;
