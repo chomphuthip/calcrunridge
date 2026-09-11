@@ -52,20 +52,18 @@ void set_sdhf(struct namespace_entry* e) {
 
     get_user_input();
     
-    size_t* sdhf = calloc(COLLECTION_LEN, sizeof(size_t));
+    if(!e->sdhf) e->sdhf = calloc(COLLECTION_LEN, sizeof(size_t));
 
     int idx = 0;
     int chars_travelled = 0;
     size_t cur_num = 0;
     char* cur_ptr = user_input;
     while (idx < COLLECTION_LEN && sscanf(cur_ptr, "%llx%n", &cur_num, &chars_travelled) == 1) {
-        sdhf[idx++] = cur_num;
+        e->sdhf[idx++] = cur_num;
 
         cur_ptr += chars_travelled;
         while (*cur_ptr == ' ' || *cur_ptr == ',') cur_ptr++;
     }
-
-    e->sdhf = sdhf;
 }
 
 void set_smart(struct namespace_entry* e) {
@@ -260,7 +258,7 @@ int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
 
     while (1) {
-        printf("Select an option:\n1: add a new color\n2: edit a color\n3: list all colors\n4: convert a color to a different format\n5: render a color\n>>");
+        printf("Select an option:\n1: add a new color\n2: edit a color\n3: list all colors\n4: convert a color to a different format\n5: render a color\n6: exit\n>>");
 
         get_user_input();
         switch (user_input[0]) {
@@ -279,6 +277,8 @@ int main() {
         case '5':
             handle_render();
             break;
+        case '6':
+            return 0;
         default:
             printf("Unknown choice\n\n");
             break;

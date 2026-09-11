@@ -16,4 +16,4 @@ Collection of 5 CTF challenges to expose users to Windows binary exploitation. T
 * __Fuzzing__: Setup WinAFL fuzzing harnesses to discover vulnerabilities
 * __Exploit Development__: Practice different exploitation strategies (write-what-where to write ROP chain directly to stack vs. stack pivot)
 * __Going past the PoC__: Build end-to-end shellcode to connect to your favorite C2 and host instances for your friends using `ncat -e`
-* __Remix Challanges__: Adjust difficulty (I definitely did), add native socket support, or use these challenges as a template for future challenges
+* __Remix Challanges__: Adjust difficulty, add native socket support, or use these challenges as a template for future challenges
