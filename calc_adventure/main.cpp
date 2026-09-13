@@ -1,8 +1,9 @@
 #include<stdio.h>
 #include<string.h>
 #include<vector>
+#include "licensing.h"
 
-#define USER_INPUT_SZ 0x100
+#define USER_INPUT_SZ 0x1000
 char user_input[USER_INPUT_SZ];
 void get_user_input() {
     memset(user_input, 0, USER_INPUT_SZ);

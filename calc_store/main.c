@@ -77,9 +77,10 @@ void handle_edit(struct calc* calcs) {
     }
 
     struct calc* selected_calc = &calcs[idx];
-
+    
     printf("New name: ");
-    get_user_input();
+    fgets(selected_calc->name, USER_INPUT_SZ, stdin);
+    selected_calc->name[strcspn(selected_calc->name, "\r\n")] = '\0';
 
     printf("New cost: ");
     scanf("%d", &selected_calc->cost);

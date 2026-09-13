@@ -186,6 +186,7 @@
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <DataExecutionPrevention>false</DataExecutionPrevention>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
